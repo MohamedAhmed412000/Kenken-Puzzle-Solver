@@ -1,103 +1,53 @@
-import pygame
-from input import N, grid
+class KenKen():
 
-WIDTH = 550
-BG_COLOR = (251, 247, 245)
-LINE_COLOR = (0, 0, 0)
-NUM_COLOR = (52, 31, 151)
-LOWER_NUM_COLOR = (52, 31, 151)
-MARGIN = (WIDTH - 100) / N
-BOARD = [[0 for i in range(N)] for j in range(N)]
+    def __init__(self, size, lines):
+        self.variables = list()
+        self.neighbors = dict()
+        self.blockVar = list()
+        self.blockOp = list()
+        self.blockValue = list()
+        self.blockVariables = list()
 
-def coordinates(x, y):
-    return ((50+(x-1)*MARGIN, 50+(y-1)*MARGIN), (50+(x-1)*MARGIN, 50+y*MARGIN)), \
-            ((50+x*MARGIN, 50+(y-1)*MARGIN), (50+x*MARGIN, 50+y*MARGIN)), \
-            ((50+(x-1)*MARGIN, 50+(y-1)*MARGIN), (50+x*MARGIN, 50+(y-1)*MARGIN)), \
-            ((50+(x-1)*MARGIN, 50+y*MARGIN), (50+x*MARGIN, 50+y*MARGIN))
+        """Create variables list"""
+        for i in range(size):
+            for j in range(size):
+                self.variables.append('K' + str(i) + str(j))
 
-def clear(win, x, y):
-    if x < 0 or x >= N or y < 0 or y >= N:
-        return
-    pygame.draw.rect(win, BG_COLOR, (100+x*MARGIN, 100+y*MARGIN, MARGIN-60, MARGIN-60))
-    pygame.display.update()
-    return
+        """Create domains dictionary"""
+        dictDomainsValues = list(range(1, size + 1))
+        self.domains = dict((v, dictDomainsValues) for v in self.variables)
 
-def insert(win, x, y):
-    if x < 0 or x >= N or y < 0 or y >= N:
-        return
-    FONT = pygame.font.SysFont("Comic Sans MS", 20 + 10 * N)
+        """Create neighbors dictionary"""
+        for v in self.variables:
+            dictNeighborValue = []
+            coordinateX = int(list(v)[1])
+            coordinateY = int(list(v)[2])
 
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return
-            if event.type == pygame.KEYDOWN:
-                if 0 < event.key - 48 < N + 1:
-                    BOARD[x][y] = event.key - 48
-                    pygame.draw.rect(win, BG_COLOR, (100+x*MARGIN, 100+y*MARGIN, MARGIN-60, MARGIN-60))
-                    text = FONT.render(str(BOARD[x][y]), True, NUM_COLOR)
-                    win.blit(text, (50+MARGIN*(x+0.5), 50+MARGIN*(y+0.35)))
-                    pygame.display.update()
-                    return
-            if event.type == pygame.MOUSEBUTTONUP:
-                pos = pygame.mouse.get_pos()
-                if event.button == 1:
-                    insert(win, int((pos[0]-50)//MARGIN), int((pos[1]-50)//MARGIN))
-                if event.button == 3:
-                    clear(win, int((pos[0]-50)//MARGIN), int((pos[1]-50)//MARGIN))
+            for i in range(size):
+                if i != coordinateY:
+                    string = 'K' + str(coordinateX) + str(i)
+                    dictNeighborValue.append(string)
+                if i != coordinateX:
+                    string = 'K' + str(i) + str(coordinateY)
+                    dictNeighborValue.append(string)
 
-            
+            self.neighbors[v] = dictNeighborValue
 
-def main(grid):
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH, WIDTH))
-    pygame.display.set_caption("Kenken")
-    screen.fill(BG_COLOR)
-    FONT = pygame.font.SysFont("Comic Sans MS", 20 + 5 * N)
+        """Create constraint data lists"""
+        for l in lines:
+            var, op, val = removeSpace(l)
 
-    # grid lines
-    for i in range(N+1):
-        width = 2
-        if i % N == 0:
-            width = 4
-        pygame.draw.line(screen, LINE_COLOR, (50+MARGIN*i, 50), (50+MARGIN*i, 500), width)
-        pygame.draw.line(screen, LINE_COLOR, (50, 50+MARGIN*i), (500, 50+MARGIN*i), width)
+            self.blockVar.append(re.findall('\d+', var))
+            self.blockOp.append(op)
+            self.blockValue.append(int(val))
 
-    # grid
-    border = {}
-    for item in grid:
-        dimensions = {}
-        for i in item[1]:
-            l, r, n, s = coordinates((i-1)%N+1, (i-1)//N+1)
-            for element in [l, r, n, s]:
-                if element not in dimensions.keys():
-                    dimensions[element] = 1
-                else:
-                    dimensions[element] += 1
-            if i == min(item[1]):
-                text = FONT.render(item[0], True, NUM_COLOR)
-                screen.blit(text, (50+MARGIN*((i-1)%N) + 7, 50+MARGIN*((i-1)//N)))
-        for k, v in dimensions.items():
-            if v == 1:
-                border[k] = dimensions[k]
+        for i in range(len(self.blockVar)):
+            blockList = []
+            for j in range(0, len(self.blockVar[i]), 2):
+                string = 'K' + str(self.blockVar[i][j]) + str(self.blockVar[i][j + 1])
+                blockList.append(string)
 
-    for k, v in border.items():
-        if v == 1:
-            pygame.draw.line(screen, LINE_COLOR, k[0], k[1], 4)
-
-    pygame.display.update()
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return
-            if event.type == pygame.WINDOWRESTORED:
-                pygame.display.update()
-            if event.type == pygame.MOUSEBUTTONUP:
-                pos = pygame.mouse.get_pos()
-                if event.button == 1:
-                    insert(screen, int((pos[0]-50)//MARGIN), int((pos[1]-50)//MARGIN))
-                if event.button == 3:
-                    clear(screen, int((pos[0]-50)//MARGIN), int((pos[1]-50)//MARGIN))
-
-main(grid)
+            self.blockVariables.append(blockList)
+    
+    def add_CSP(self, csp):
+        self.game_kenken = csp
