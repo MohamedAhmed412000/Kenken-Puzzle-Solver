@@ -21,3 +21,9 @@ def shuffled(iterable):
     random.shuffle(items)
     return items
 
+identity = lambda x: x
+argmin = min
+def argmin_random_tie(seq, key=identity):
+    """Return a minimum element of seq; break ties at random."""
+    return argmin(shuffled(seq), key=key)
+
