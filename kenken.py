@@ -1,3 +1,18 @@
+import re
+import sys
+
+def removeSpace(l):
+    ind = l.find(']')
+    remain = l[ind:-1]
+    l = l[0:ind]
+    for i in range(len(l)):
+        if i >= len(l) or l[i] == ']':
+            break
+        if l[i - 1] == ',' and l[i] == ' ' and i != 0:
+            l = l.replace(l[i],'')
+    l += remain
+    return l.split()
+
 class KenKen():
 
     def __init__(self, size, lines):
