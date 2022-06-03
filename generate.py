@@ -71,3 +71,28 @@ def generate(size):
         grids[-1].append(operator)
         grids[-1].append(int(target))
     return size, grids
+
+def format2Gui(n, grid):
+    grids_Gui = []
+    for lst in grid:
+        op, num = lst[-2], lst[-1]
+        num_Gui = f'{num}{op}' if op != '.' else str(num)
+        points = lst[:-2]
+        val = []
+        for point in points:
+            val.append((point[0])*n+point[1]+1)
+        grids_Gui.append([num_Gui, val])
+    return n, grids_Gui
+
+def format2Solver(n, g):
+    a = []
+    for i in range(len(g)):
+        s = "["
+        op = g[i][-2]
+        num = g[i][-1]
+        for j in range(len(g[i]) - 2):
+            s += str(g[i][j]) + ","
+        s = s[0:-1] + "]"
+        s = s + " " + op + " " + str(num) + "\n"
+        a.append(s)
+    return n, a
