@@ -63,6 +63,93 @@ class KenKen():
                 blockList.append(string)
 
             self.blockVariables.append(blockList)
-    
+
     def add_CSP(self, csp):
         self.game_kenken = csp
+
+def kenken_constraint(self, A, a, B, b):
+        if B in self.neighbors[A] and a == b:
+            return False
+
+        for n in self.neighbors[A]:
+            if n in self.game_kenken.infer_assignment() and self.game_kenken.infer_assignment()[n] == a:
+                return False
+
+        for n in self.neighbors[B]:
+            if n in self.game_kenken.infer_assignment() and self.game_kenken.infer_assignment()[n] == b:
+                return False
+
+        blockA = blockB = 0
+
+        for i in range(len(self.blockVariables)):
+            if A in self.blockVariables[i]:
+                blockA = i
+            if B in self.blockVariables[i]:
+                blockB = i
+
+        if blockA == blockB:
+            blockNum = blockA
+            if self.blockOp[blockNum] == '.':
+                if A != B:
+                    return False
+                elif a != b:
+                    return False
+                elif a != self.blockValue[blockNum]:
+                    return False
+
+                return True
+
+            elif self.blockOp[blockNum] == '+':
+                sum = assigned = 0
+
+                for v in self.blockVariables[blockNum]:
+                    if v == A:
+                        sum += a
+                        assigned += 1
+                    elif v == B:
+                        sum += b
+                        assigned += 1
+                    elif v in self.game_kenken.infer_assignment():
+                        sum += self.game_kenken.infer_assignment()[v]
+                        assigned += 1
+
+                if sum == self.blockValue[blockNum] and assigned == len(self.blockVariables[blockNum]):
+                    return True
+                elif sum < self.blockValue[blockNum] and assigned < len(self.blockVariables[blockNum]):
+                    return True
+                else:
+                    return False
+
+            elif self.blockOp[blockNum] == '*':
+                sum = 1
+                assigned = 0
+
+                for v in self.blockVariables[blockNum]:
+                    if v == A:
+                        sum *= a
+                        assigned += 1
+                    elif v == B:
+                        sum *= b
+                        assigned += 1
+                    elif v in self.game_kenken.infer_assignment():
+                        sum *= self.game_kenken.infer_assignment()[v]
+                        assigned += 1
+
+                if sum == self.blockValue[blockNum] and assigned == len(self.blockVariables[blockNum]):
+                    return True
+                elif sum <= self.blockValue[blockNum] and assigned < len(self.blockVariables[blockNum]):
+                    return True
+                else:
+                    return False
+
+            elif self.blockOp[blockNum] == '/':
+                return max(a, b) / min(a, b) == self.blockValue[blockNum]
+
+            elif self.blockOp[blockNum] == '-':
+                return max(a, b) - min(a, b) == self.blockValue[blockNum]
+
+        else:
+            constraintA = self.kenken_constraint_op(A, a, blockA)
+            constraintB = self.kenken_constraint_op(B, b, blockB)
+
+            return constraintA and constraintB
