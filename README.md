@@ -58,6 +58,9 @@ Start the game
 ## Analysis Part
 
 - Time analysis in seconds on 100 boards for different sizes on the 3 algorithms :
+BT : backtracking
+FC : backtracking with forward checking
+AC : backtracking with arc consistency
 
 | size  |   BT   |   FC   |   AC   |
 | ----- | ------ | ------ | ------ |
