@@ -153,3 +153,92 @@ def kenken_constraint(self, A, a, B, b):
             constraintB = self.kenken_constraint_op(B, b, blockB)
 
             return constraintA and constraintB
+        
+    def kenken_constraint_op(self, var, val, blockNum):
+        if self.blockOp[blockNum] == '.':
+            return val == self.blockValue[blockNum]
+    
+        elif self.blockOp[blockNum] == '+':
+            sum2 = 0
+            assigned2 = 0
+    
+            for v in self.blockVariables[blockNum]:
+                if v == var:
+                    sum2 += val
+                    assigned2 += 1
+                elif v in self.game_kenken.infer_assignment():
+                    sum2 += self.game_kenken.infer_assignment()[v]
+                    assigned2 += 1
+    
+            if sum2 == self.blockValue[blockNum] and assigned2 == len(self.blockVariables[blockNum]):
+                return True
+            elif sum2 < self.blockValue[blockNum] and assigned2 < len(self.blockVariables[blockNum]):
+                return True
+            else:
+                return False
+    
+        elif self.blockOp[blockNum] == '*':
+            sum2 = 1
+            assigned2 = 0
+    
+            for v in self.blockVariables[blockNum]:
+                if v == var:
+                    sum2 *= val
+                    assigned2 += 1
+                elif v in self.game_kenken.infer_assignment():
+                    sum2 *= self.game_kenken.infer_assignment()[v]
+                    assigned2 += 1
+    
+            if sum2 == self.blockValue[blockNum] and assigned2 == len(self.blockVariables[blockNum]):
+                return True
+            elif sum2 <= self.blockValue[blockNum] and assigned2 < len(self.blockVariables[blockNum]):
+                return True
+            else:
+                return False
+    
+        elif self.blockOp[blockNum] == '/':
+            for v in self.blockVariables[blockNum]:
+                if v != var:
+                    constraintVar2 = v
+    
+            if constraintVar2 in self.game_kenken.infer_assignment():
+                constraintVal2 = self.game_kenken.infer_assignment()[constraintVar2]
+                return max(constraintVal2, val) / min(constraintVal2, val) == self.blockValue[blockNum]
+            else:
+                for d in self.game_kenken.choices(constraintVar2):
+                    if max(d, val) / min(d, val) == self.blockValue[blockNum]:
+                        return True
+    
+                return False
+    
+        elif self.blockOp[blockNum] == '-':
+            for v in self.blockVariables[blockNum]:
+                if v != var:
+                    constraintVar2 = v
+    
+            if constraintVar2 in self.game_kenken.infer_assignment():
+                constraintVal2 = self.game_kenken.infer_assignment()[constraintVar2]
+                return max(constraintVal2, val) - min(constraintVal2, val) == self.blockValue[blockNum]
+            else:
+                for d in self.game_kenken.choices(constraintVar2):
+                    if max(d, val) - min(d, val) == self.blockValue[blockNum]:
+                        return True
+    
+                return False    
+
+    def display(self, dic, size):
+        for i in range(size):
+            for j in range(size):
+                string = 'K' + str(i) + str(j)
+                sys.stdout.write(str(dic[string]) + " ")
+            print()
+
+    def format_soln(self, dic, size):
+        soln = []
+        for i in range(size):
+            sub = []
+            for j in range(size):
+                string = 'K' + str(i) + str(j)
+                sub.append(dic[string])
+            soln.append(sub)
+        return soln
