@@ -59,7 +59,7 @@ Start the game
 
 - Time analysis in seconds on 100 boards for different sizes on the 3 algorithms :
 
-| size  |   BT   |   FC   |   MAC  |
+| size  |   BT   |   FC   |   AC   |
 | ----- | ------ | ------ | ------ |
 | 3 * 3 | 0.284  | 0.3398 | 0.6377 |
 | 4 * 4 | 2.9063 | 2.531  | 4.9756 |
