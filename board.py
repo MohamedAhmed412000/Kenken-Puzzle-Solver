@@ -139,24 +139,27 @@ class Board:
 
         pygame.display.update()
         while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    return
-                if event.type == pygame.WINDOWRESTORED:
-                    pygame.display.update()
-                if event.type == pygame.MOUSEBUTTONUP and self.continous:
-                    if self.solver == 'user':
-                        pos = pygame.mouse.get_pos()
-                        if event.button == 1:
-                            check = self.insert(screen, int((pos[0]-50)//self.MARGIN), int((pos[1]-50)//self.MARGIN))
-                            if check:
-                                FONT = pygame.font.SysFont("Verdana", 23)
-                                text = FONT.render("Game Solved", True, (255, 0, 0))
-                                screen.blit(text, (200, 10))
-                                pygame.display.update()
-                                self.continous = False
-                        if event.button == 3:
-                            self.clear(screen, int((pos[0]-50)//self.MARGIN), int((pos[1]-50)//self.MARGIN))
-
-
+            try:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        return
+                    if event.type == pygame.WINDOWRESTORED:
+                        pygame.display.update()
+                    if event.type == pygame.MOUSEBUTTONUP and self.continous:
+                        if self.solver == 'user':
+                            pos = pygame.mouse.get_pos()
+                            if event.button == 1:
+                                check = self.insert(screen, int((pos[0]-50)//self.MARGIN), int((pos[1]-50)//self.MARGIN))
+                                if check:
+                                    FONT = pygame.font.SysFont("Verdana", 23)
+                                    text = FONT.render("Game Solved", True, (255, 0, 0))
+                                    screen.blit(text, (200, 10))
+                                    pygame.display.update()
+                                    self.continous = False
+                            if event.button == 3:
+                                self.clear(screen, int((pos[0]-50)//self.MARGIN), int((pos[1]-50)//self.MARGIN))
+            except:
+                pygame.quit()
+                return
+                    
