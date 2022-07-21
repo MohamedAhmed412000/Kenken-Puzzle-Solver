@@ -67,7 +67,7 @@ class KenKen():
     def add_CSP(self, csp):
         self.game_kenken = csp
 
-def kenken_constraint(self, A, a, B, b):
+    def kenken_constraint(self, A, a, B, b):
         if B in self.neighbors[A] and a == b:
             return False
 
