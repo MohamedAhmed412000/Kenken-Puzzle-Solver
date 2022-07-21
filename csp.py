@@ -108,7 +108,7 @@ class CSP(search.Problem):
         return [var for var in self.variables
                 if self.nconflicts(var, current[var], current) > 0]
     
-    def AC3(csp, queue=None, removals=None):
+def AC3(csp, queue=None, removals=None):
     """[Figure 6.3]"""
     if queue is None:
         queue = [(Xi, Xk) for Xi in csp.variables for Xk in csp.neighbors[Xi]]
@@ -124,73 +124,107 @@ class CSP(search.Problem):
         return True
 
 
-    def revise(csp, Xi, Xj, removals):
-        "Return true if we remove a value."
-        revised = False
-        for x in csp.curr_domains[Xi][:]:
-            # If Xi=x conflicts with Xj=y for every possible y, eliminate Xi=x
-            if all(not csp.constraints(Xi, x, Xj, y) for y in csp.curr_domains[Xj]):
-                csp.prune(Xi, x, removals)
-                revised = True
-        return revised
+def revise(csp, Xi, Xj, removals):
+    "Return true if we remove a value."
+    revised = False
+    for x in csp.curr_domains[Xi][:]:
+        # If Xi=x conflicts with Xj=y for every possible y, eliminate Xi=x
+        if all(not csp.constraints(Xi, x, Xj, y) for y in csp.curr_domains[Xj]):
+            csp.prune(Xi, x, removals)
+            revised = True
+    return revised
 
-    # ______________________________________________________________________________
-    # CSP Backtracking Search
+# ______________________________________________________________________________
+# CSP Backtracking Search
 
-    # Variable ordering
-
-
-    def first_unassigned_variable(assignment, csp):
-        "The default variable order."
-        return first([var for var in csp.variables if var not in assignment])
+# Variable ordering
 
 
-    def mrv(assignment, csp):
-        "Minimum-remaining-values heuristic."
-        return argmin_random_tie(
-            [v for v in csp.variables if v not in assignment],
-            key=lambda var: num_legal_values(csp, var, assignment))
+def first_unassigned_variable(assignment, csp):
+    "The default variable order."
+    return first([var for var in csp.variables if var not in assignment])
 
 
-    def num_legal_values(csp, var, assignment):
-        #if csp.curr_domains:
-            #return len(csp.curr_domains[var])
-        #else:
-            return count(csp.nconflicts(var, val, assignment) == 0
-                         for val in csp.domains[var])
-
-    # Value ordering
+def mrv(assignment, csp):
+    "Minimum-remaining-values heuristic."
+    return argmin_random_tie(
+        [v for v in csp.variables if v not in assignment],
+        key=lambda var: num_legal_values(csp, var, assignment))
 
 
-    def unordered_domain_values(var, assignment, csp):
-        "The default value order."
-        return csp.choices(var)
+def num_legal_values(csp, var, assignment):
+    #if csp.curr_domains:
+        #return len(csp.curr_domains[var])
+    #else:
+        return count(csp.nconflicts(var, val, assignment) == 0
+                     for val in csp.domains[var])
+
+# Value ordering
 
 
-    def lcv(var, assignment, csp):
-        "Least-constraining-values heuristic."
-        return sorted(csp.choices(var),
-                      key=lambda val: csp.nconflicts(var, val, assignment))
-
-    # Inference
+def unordered_domain_values(var, assignment, csp):
+    "The default value order."
+    return csp.choices(var)
 
 
-    def no_inference(csp, var, value, assignment, removals):
-        return True
+def lcv(var, assignment, csp):
+    "Least-constraining-values heuristic."
+    return sorted(csp.choices(var),
+                  key=lambda val: csp.nconflicts(var, val, assignment))
+
+# Inference
 
 
-    def forward_checking(csp, var, value, assignment, removals):
-        "Prune neighbor values inconsistent with var=value."
-        for B in csp.neighbors[var]:
-            if B not in assignment:
-                for b in csp.curr_domains[B][:]:
-                    if not csp.constraints(var, value, B, b):
-                        csp.prune(B, b, removals)
-                if not csp.curr_domains[B]:
-                    return False
-        return True
+def no_inference(csp, var, value, assignment, removals):
+    return True
 
 
-    def mac(csp, var, value, assignment, removals):
-        "Maintain arc consistency."
-        return AC3(csp, [(X, var) for X in csp.neighbors[var]], removals)
+def forward_checking(csp, var, value, assignment, removals):
+    "Prune neighbor values inconsistent with var=value."
+    for B in csp.neighbors[var]:
+        if B not in assignment:
+            for b in csp.curr_domains[B][:]:
+                if not csp.constraints(var, value, B, b):
+                    csp.prune(B, b, removals)
+            if not csp.curr_domains[B]:
+                return False
+    return True
+
+
+def mac(csp, var, value, assignment, removals):
+    "Maintain arc consistency."
+    return AC3(csp, [(X, var) for X in csp.neighbors[var]], removals)
+
+# The search, proper
+
+
+def backtracking_search(csp: CSP,
+                        select_unassigned_variable=first_unassigned_variable,
+                        order_domain_values=unordered_domain_values,
+                        inference=no_inference):
+    """[Figure 6.5]
+    """
+
+    def backtrack(assignment):
+        # Check that assignment is complete
+        if len(assignment) == len(csp.variables):
+            return assignment
+        # select variable not in assignment
+        var = select_unassigned_variable(assignment, csp)
+        for value in order_domain_values(var, assignment, csp):
+            # check if A is valid assignment
+            if 0 == csp.nconflicts(var, value, assignment):
+                csp.assign(var, value, assignment)
+                removals = csp.suppose(var, value)
+                if inference(csp, var, value, assignment, removals):
+                    result = backtrack(assignment)
+                    if result is not None:
+                        return result
+                csp.restore(removals)
+        csp.unassign(var, assignment)
+        return None
+
+    result = backtrack({})
+    assert result is None or csp.goal_test(result)
+    # print(result)
+    return result
