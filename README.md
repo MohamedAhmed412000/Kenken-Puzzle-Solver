@@ -1,5 +1,5 @@
 
-<div id="top"></div>
+<div id="top">
 <h1 align="center"> Kenken Puzzle Solver </h1>
 <br />
 </div>
